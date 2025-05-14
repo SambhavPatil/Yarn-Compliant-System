@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yarn Complaint System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧵</text></svg>">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        input[type="text"],
+        input[type="date"],
+        textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            flex: 1;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            opacity: 0.9;
+        }
+        .submit-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        .download-pdf {
+            background-color: #e74c3c;
+            color: white;
+        }
+        .download-xlsx {
+            background-color: #2ecc71;
+            color: white;
+        }
+        .preview {
+            margin-top: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+            display: none;
+        }
+        .preview h2 {
+            margin-top: 0;
+            color: #2c3e50;
+        }
+        .preview-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        .preview-table th, .preview-table td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        .preview-table th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+        .success-message {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 300px;
+            border-radius: 5px;
+        }
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .close:hover {
+            color: black;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            box-sizing: border-box;
+        }
+        .modal-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+        .modal-button:hover {
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧵 Yarn Complaint System 🧶</h1>
+        
+        <div id="successMessage" class="success-message">
+            Complaint submitted successfully!
+        </div>
+        
+        <form id="complaintForm">
+            <div class="form-group">
+                <label for="count">Count :-</label>
+                <input type="text" id="count">
+            </div>
+            
+            <div class="form-group">
+                <label for="lotNo">Lot No. :-</label>
+                <input type="text" id="lotNo">
+            </div>
+            
+            <div class="form-group">
+                <label for="invoiceDate">Your Invoice Date : -</label>
+                <input type="date" id="invoiceDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="invoiceNumber">Invoice Number : -</label>
+                <input type="text" id="invoiceNumber">
+            </div>
+            
+            <div class="form-group">
+                <label for="bagNo">Bag No. :-</label>
+                <input type="text" id="bagNo">
+            </div>
+            
+            <div class="form-group">
+                <label for="complaintDate">Date of complaint</label>
+                <input type="date" id="complaintDate">
+            </div>
+            
+            <div class="form-group">
+                <label for="findings">Our Finding</label>
+                <textarea id="findings" placeholder="Enter findings here..."></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="observations">Our Observations</label>
+                <textarea id="observations" placeholder="Enter observations here..."></textarea>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="submit-btn">Submit</button>
+                <button type="button" class="download-pdf" id="downloadPdf">Download PDF</button>
+                <button type="button" class="download-xlsx" id="downloadXlsx">Download Excel</button>
+            </div>
+        </form>
+        
+        <div class="preview" id="complaintPreview">
+            <h2>Complaint Preview</h2>
+            <table class="preview-table">
+                <tr>
+                    <th colspan="2">Complaint Details</th>
+                    <td colspan="1" id="currentDate"></td>
+                </tr>
+                <tr>
+                    <td rowspan="6">References</td>
+                    <td>Count :-</td>
+                    <td id="previewCount"></td>
+                </tr>
+                <tr>
+                    <td>Lot No. :-</td>
+                    <td id="previewLotNo"></td>
+                </tr>
+                <tr>
+                    <td>Your Invoice Date : -</td>
+                    <td id="previewInvoiceDate"></td>
+                </tr>
+                <tr>
+                    <td>Invoice Number : -</td>
+                    <td id="previewInvoiceNumber"></td>
+                </tr>
+                <tr>
+                    <td>Bag No. :-</td>
+                    <td id="previewBagNo"></td>
+                </tr>
+                <tr>
+                    <td>Date of complaint</td>
+                    <td id="previewComplaintDate"></td>
+                </tr>
+                <tr>
+                    <td rowspan="2">Our Finding</td>
+                    <td colspan="2" id="previewFindingsTitle"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="previewFindings"></td>
+                </tr>
+                <tr>
+                    <td rowspan="4">Our Observations</td>
+                    <td colspan="2" id="previewObservations1"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="previewObservations2"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="previewObservations3"></td>
+                </tr>
+                <tr>
+                    <td colspan="2" id="previewObservations4"></td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- Filename Modal -->
+    <div id="filenameModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h3>Enter Filename</h3>
+            <input type="text" id="filename" class="modal-input" placeholder="Enter filename">
+            <button id="confirmDownload" class="modal-button">Download</button>
+        </div>
+    </div>
+
+    <script>
+        // Initialize jsPDF
+        const { jsPDF } = window.jspdf;
+        
+        // Set current date
+        const today = new Date();
+        const formattedDate = `${today.getDate()}.${today.getMonth() + 1}.${today.getFullYear()}`;
+        document.getElementById('currentDate').textContent = formattedDate;
+        
+        // Form submission handler
+        document.getElementById('complaintForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Update preview
+            updatePreview();
+            
+            // Show success message
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Show preview
+            document.getElementById('complaintPreview').style.display = 'block';
+            
+            // Scroll to preview
+            document.getElementById('complaintPreview').scrollIntoView({ behavior: 'smooth' });
+            
+            // Hide success message after 3 seconds
+            setTimeout(function() {
+                document.getElementById('successMessage').style.display = 'none';
+            }, 3000);
+        });
+        
+        // Update preview function
+        function updatePreview() {
+            // Format complaint date
+            let complaintDate = document.getElementById('complaintDate').value;
+            if (complaintDate) {
+                const date = new Date(complaintDate);
+                complaintDate = `${date.getDate()}/${date.getMonth() + 1}/${String(date.getFullYear()).slice(2)}`;
+            }
+            
+            // Set values in preview table
+            document.getElementById('previewCount').textContent = document.getElementById('count').value;
+            document.getElementById('previewLotNo').textContent = document.getElementById('lotNo').value;
+            document.getElementById('previewInvoiceDate').textContent = document.getElementById('invoiceDate').value;
+            document.getElementById('previewInvoiceNumber').textContent = document.getElementById('invoiceNumber').value;
+            document.getElementById('previewBagNo').textContent = document.getElementById('bagNo').value;
+            document.getElementById('previewComplaintDate').textContent = complaintDate;
+            
+            // Set findings
+            const findings = document.getElementById('findings').value;
+            document.getElementById('previewFindingsTitle').textContent = findings.split('\n')[0] || '';
+            document.getElementById('previewFindings').textContent = findings;
+            
+            // Set observations - split into multiple rows if needed
+            const observations = document.getElementById('observations').value;
+            const observationLines = observations.split('\n');
+            
+            document.getElementById('previewObservations1').textContent = observationLines[0] || '';
+            document.getElementById('previewObservations2').textContent = observationLines[1] || '';
+            document.getElementById('previewObservations3').textContent = observationLines[2] || '';
+            document.getElementById('previewObservations4').textContent = observationLines.slice(3).join('\n') || '';
+        }
+        
+        // Modal functions
+        const modal = document.getElementById("filenameModal");
+        const span = document.getElementsByClassName("close")[0];
+        
+        span.onclick = function() {
+            modal.style.display = "none";
+        }
+        
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+            }
+        }
+        
+        // Generate PDF
+        document.getElementById('downloadPdf').addEventListener('click', function() {
+            showFilenameModal('pdf');
+        });
+        
+        // Generate Excel
+        document.getElementById('downloadXlsx').addEventListener('click', function() {
+            showFilenameModal('xlsx');
+        });
+        
+        function showFilenameModal(type) {
+            // Set default filename as count value or "complaint_report" if count is empty
+            const defaultName = document.getElementById('count').value || "complaint_report";
+            document.getElementById('filename').value = defaultName;
+            
+            // Store the type for later use
+            document.getElementById('confirmDownload').setAttribute('data-type', type);
+            
+            // Display the modal
+            modal.style.display = "block";
+        }
+        
+        // Confirm download button
+        document.getElementById('confirmDownload').addEventListener('click', function() {
+            const type = this.getAttribute('data-type');
+            const filename = document.getElementById('filename').value || document.getElementById('count').value || "complaint_report";
+            
+            if (type === 'pdf') {
+                generatePDF(filename);
+            } else {
+                generateExcel(filename);
+            }
+            
+            // Hide modal
+            modal.style.display = "none";
+        });
+        
+        // Generate PDF function
+        function generatePDF(filename) {
+            // Create PDF
+            const doc = new jsPDF();
+            
+            // Get current date
+            const currentDate = formattedDate;
+            
+            // Format complaint date
+            let complaintDate = document.getElementById('complaintDate').value;
+            if (complaintDate) {
+                const date = new Date(complaintDate);
+                complaintDate = `${date.getDate()}/${date.getMonth() + 1}/${String(date.getFullYear()).slice(2)}`;
+            }
+            
+            // Set up table structure
+            doc.setFontSize(12);
+            doc.setLineWidth(0.1);
+            
+            // Header row
+            let y = 20;
+            doc.rect(10, y, 130, 10);
+            doc.rect(140, y, 60, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Complaint Details', 75, y + 7, { align: 'center' });
+            doc.text(currentDate, 170, y + 7, { align: 'center' });
+            
+            // References section
+            y += 10;
+            doc.rect(10, y, 50, 60);
+            doc.text('References', 35, y + 30, { align: 'center' });
+            
+            // Reference fields
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.text('Count :-', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(document.getElementById('count').value, 135, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Lot No. :-', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(document.getElementById('lotNo').value, 135, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Your Invoice Date : -', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(document.getElementById('invoiceDate').value, 135, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Invoice Number : -', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(document.getElementById('invoiceNumber').value, 135, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Bag No. :-', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(document.getElementById('bagNo').value, 135, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 70, 10);
+            doc.rect(130, y, 70, 10);
+            doc.setFont(undefined, 'bold');
+            doc.text('Date of complaint', 65, y + 7);
+            doc.setFont(undefined, 'normal');
+            doc.text(complaintDate, 135, y + 7);
+            
+            // Our finding section
+            y += 10;
+            doc.rect(10, y, 50, 20);
+            doc.setFont(undefined, 'bold');
+            doc.text('Our Finding', 35, y + 10, { align: 'center' });
+            
+            doc.rect(60, y, 140, 10);
+            const findingTitle = document.getElementById('findings').value.split('\n')[0] || '';
+            doc.text(findingTitle, 65, y + 7);
+            
+            y += 10;
+            doc.rect(60, y, 140, 10);
+            const findings = document.getElementById('findings').value;
+            doc.setFont(undefined, 'normal');
+            doc.text(findings, 65, y + 7, { maxWidth: 130 });
+            
+            // Our observations section
+            y += 10;
+            doc.rect(10, y, 50, 40);
+            doc.setFont(undefined, 'bold');
+            doc.text('Our Observations', 35, y + 20, { align: 'center' });
+            
+            const observations = document.getElementById('observations').value;
+            const observationLines = observations.split('\n');
+            
+            doc.rect(60, y, 140, 10);
+            doc.setFont(undefined, 'normal');
+            doc.text(observationLines[0] || '', 65, y + 7, { maxWidth: 130 });
+            
+            y += 10;
+            doc.rect(60, y, 140, 10);
+            doc.text(observationLines[1] || '', 65, y + 7, { maxWidth: 130 });
+            
+            y += 10;
+            doc.rect(60, y, 140, 10);
+            doc.text(observationLines[2] || '', 65, y + 7, { maxWidth: 130 });
+            
+            y += 10;
+            doc.rect(60, y, 140, 10);
+            doc.text(observationLines.slice(3).join(' ') || '', 65, y + 7, { maxWidth: 130 });
+            
+            // Save PDF
+            doc.save(`${filename}.pdf`);
+        }
+        
+        // Generate Excel function
+        function generateExcel(filename) {
+            // Format complaint date
+            let complaintDate = document.getElementById('complaintDate').value;
+            if (complaintDate) {
+                const date = new Date(complaintDate);
+                complaintDate = `${date.getDate()}/${date.getMonth() + 1}/${String(date.getFullYear()).slice(2)}`;
+            }
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            
+            // Create data array
+            const data = [
+                ['Complaint Details', '', formattedDate],
+                ['References', 'Count :-', document.getElementById('count').value],
+                ['', 'Lot No. :-', document.getElementById('lotNo').value],
+                ['', 'Your Invoice Date : -', document.getElementById('invoiceDate').value],
+                ['', 'Invoice Number : -', document.getElementById('invoiceNumber').value],
+                ['', 'Bag No. :-', document.getElementById('bagNo').value],
+                ['', 'Date of complaint', complaintDate],
+                ['Our Finding', document.getElementById('findings').value.split('\n')[0] || '', ''],
+                ['', document.getElementById('findings').value, ''],
+                ['Our Observations', document.getElementById('observations').value.split('\n')[0] || '', ''],
+                ['', document.getElementById('observations').value.split('\n')[1] || '', ''],
+                ['', document.getElementById('observations').value.split('\n')[2] || '', ''],
+                ['', document.getElementById('observations').value.split('\n').slice(3).join('\n') || '', '']
+            ];
+            
+            // Convert to worksheet
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            
+            // Set column widths
+            const colWidths = [{ wch: 20 }, { wch: 30 }, { wch: 40 }];
+            ws['!cols'] = colWidths;
+            
+            // Add worksheet to workbook
+            XLSX.utils.book_append_sheet(wb, ws, 'Complaint');
+            
+            // Save Excel file
+            XLSX.writeFile(wb, `${filename}.xlsx`);
+        }
+        
+        // Set default complaint date to today
+        document.getElementById('complaintDate').valueAsDate = new Date();
+        
+        // Enable pressing Enter key in the filename modal to confirm download
+        document.getElementById('filename').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                document.getElementById('confirmDownload').click();
+            }
+        });
+        
+        // Auto-update preview when fields change
+        const formInputs = document.querySelectorAll('#complaintForm input, #complaintForm textarea');
+        formInputs.forEach(input => {
+            input.addEventListener('input', function() {
+                if (document.getElementById('complaintPreview').style.display === 'block') {
+                    updatePreview();
+                }
+            });
+        });
+        
+        // Reset form function
+        function resetForm() {
+            document.getElementById('complaintForm').reset();
+            document.getElementById('complaintPreview').style.display = 'none';
+            document.getElementById('complaintDate').valueAsDate = new Date();
+        }
+        
+        // Add a reset button to the form
+        const submitBtn = document.querySelector('.submit-btn');
+        const resetBtn = document.createElement('button');
+        resetBtn.type = 'button';
+        resetBtn.className = 'reset-btn';
+        resetBtn.textContent = 'Reset Form';
+        resetBtn.style.backgroundColor = '#f39c12';
+        resetBtn.style.color = 'white';
+        resetBtn.addEventListener('click', resetForm);
+        
+        // Insert reset button after submit button
+        submitBtn.parentNode.insertBefore(resetBtn, submitBtn.nextSibling);
+    </script>
+</body>
+</html>
